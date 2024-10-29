@@ -1,5 +1,5 @@
 const core = require('@actions/core')
-const Redlock = require('redlock')
+const { default: Redlock } = require('redlock')
 const Client = require('ioredis')
 
 const validActions = ['auto', 'lock', 'unlock']

@@ -12498,7 +12498,7 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony export */   run: () => (/* binding */ run)
 /* harmony export */ });
 const core = __nccwpck_require__(7484)
-const Redlock = __nccwpck_require__(8085)
+const { default: Redlock } = __nccwpck_require__(8085)
 const Client = __nccwpck_require__(7796)
 
 const validActions = ['auto', 'lock', 'unlock']
