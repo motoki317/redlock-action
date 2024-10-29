@@ -12585,6 +12585,7 @@ async function run() {
     const durationSeconds = Number(durationSecondsStr)
 
     try {
+      core.info(`Trying to acquire lock (name=${name}) ...`)
       const start = performance.now()
       const lock = await redlock.acquire([name], durationSeconds * 1000)
       const end = performance.now()
@@ -12617,7 +12618,7 @@ async function run() {
       value = core.getState('value')
     }
 
-    core.info(`Releasing lock...`)
+    core.info(`Releasing lock ...`)
     core.info(`Lock name=${name}, value=${value}`)
 
     try {
