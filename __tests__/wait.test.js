@@ -1,7 +1,7 @@
 /**
  * Unit tests for src/wait.js
  */
-const { wait } = require('../src/wait')
+const { wait } = require('../src/util')
 const { expect } = require('@jest/globals')
 
 describe('wait.js', () => {

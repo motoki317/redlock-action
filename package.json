@@ -17,23 +17,19 @@
     "Actions",
     "JavaScript"
   ],
-  "exports": {
-    ".": "./dist/index.js"
-  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "bundle": "npm run format:write && npm run package",
+    "bundle": "npm run format:write && npm run package:main",
     "ci-test": "npx jest",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
-    "package": "npx ncc build src/index.js -o dist --source-map --license licenses.txt",
-    "package:watch": "npm run package -- --watch",
+    "package:main": "npx ncc build src/main.js -o dist --source-map --license licenses.txt",
     "test": "npx jest",
-    "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
+    "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package:main"
   },
   "license": "MIT",
   "eslintConfig": {
@@ -64,7 +60,9 @@
     ]
   },
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^1.11.1",
+    "ioredis": "^5.4.1",
+    "redlock": "^5.0.0-beta.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.8",

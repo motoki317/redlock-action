@@ -1,19 +1,61 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Redlock Action'
+description: 'Provides distributed lock via the redlock algorithm.'
+author: 'motoki317'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  action:
+    description: |
+      Action to perform.
+      auto - Locks on this action and unlocks on post-run.
+      lock - Only performs lock. (manual unlock needed!)
+      unlock - Only performs unlock.
+    required: false
+    default: 'auto'
+  value:
+    description: 'Random lock value - only needed for manual "unlock" action.'
+    required: false
+    default: ''
+
+  hosts:
+    description: 'Redis hosts, separated by comma.'
+    required: false
+    default: 'localhost:6379'
+  name:
+    description: 'Name of the lock.'
     required: true
-    default: '1000'
+
+  duration-seconds:
+    description: |
+      Number of seconds to acquire the resource for.
+      After the duration has passed without unlocking, the resource will be automatically unlocked.
+    required: false
+    default: 60
+  retry-count:
+    description:
+      'The max number of times this action will attempt to lock a resource
+      before giving up.'
+    required: false
+    default: 10
+  retry-delay-ms:
+    description: 'The time in milliseconds between attempts.'
+    required: false
+    default: 200
+  retry-jitter-ms:
+    description:
+      'The max time in milliseconds randomly added to retries to improve
+      performance under high contention.'
+    required: false
+    default: 200
 
 # Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  value:
+    description:
+      'Lock random value - used in manual unlock to release the resource.'
 
 runs:
   using: node20
   main: dist/index.js
+  post: dist/index.js
+  post-if: inputs.action == 'auto'
