@@ -27,16 +27,20 @@ with:
 
   # Number of seconds to acquire the resource for.
   # After the duration has passed without unlocking, the resource will be automatically unlocked.
+  # Default: 60
   duration-seconds: 60
 
   # The max number of times this action will attempt to lock a resource before giving up.
-  retry-count: 10
+  # Default: 60
+  retry-count: 60
 
   # The time in milliseconds between attempts.
-  retry-delay-ms: 200
+  # Default: 1000
+  retry-delay-ms: 1000
 
   # The max time in milliseconds randomly added to retries to improve performance under high contention.
-  retry-jitter-ms: 200
+  # Default: 1000
+  retry-jitter-ms: 1000
 ```
 
 ## Examples

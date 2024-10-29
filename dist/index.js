@@ -12597,7 +12597,7 @@ async function run() {
       const start = performance.now()
       const lock = await redlock.acquire([name], durationSeconds * 1000)
       const end = performance.now()
-      core.info(`Successfully acquired lock after ${end - start} ms.`)
+      core.info(`Successfully acquired lock after ${(end - start) / 1000} s.`)
 
       if (action === 'lock') {
         core.setOutput('value', lock.value)
@@ -13349,7 +13349,15 @@ module.exports = /*#__PURE__*/JSON.parse('{"acl":{"arity":-2,"flags":[],"keyStar
 var __webpack_exports__ = {};
 const { run } = __nccwpck_require__(1745)
 
-run()
+;(async () => {
+  try {
+    await run()
+    process.exit(0)
+  } catch (e) {
+    console.trace(e)
+    process.exit(1)
+  }
+})()
 
 module.exports = __webpack_exports__;
 /******/ })()

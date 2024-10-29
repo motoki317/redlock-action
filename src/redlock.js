@@ -98,7 +98,7 @@ export async function run() {
       const start = performance.now()
       const lock = await redlock.acquire([name], durationSeconds * 1000)
       const end = performance.now()
-      core.info(`Successfully acquired lock after ${end - start} ms.`)
+      core.info(`Successfully acquired lock after ${(end - start) / 1000} s.`)
 
       if (action === 'lock') {
         core.setOutput('value', lock.value)

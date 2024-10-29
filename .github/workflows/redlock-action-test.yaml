@@ -36,7 +36,7 @@ jobs:
         with:
           action: lock
           name: my-lock
-          hosts: my-redis:6379
+          hosts: localhost:6379
           duration-seconds: 60
 
       - name: Critical section
@@ -47,5 +47,5 @@ jobs:
         with:
           action: unlock
           name: my-lock
-          hosts: my-redis:6379
+          hosts: localhost:6379
           value: ${{ steps.my-lock.outputs.value }}
