@@ -40,7 +40,7 @@ inputs:
   retry-delay-ms:
     description: 'The time in milliseconds between attempts.'
     required: false
-    default: '500'
+    default: '1000'
   retry-jitter-ms:
     description:
       'The max time in milliseconds randomly added to retries to improve
