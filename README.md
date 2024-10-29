@@ -52,7 +52,7 @@ steps:
       duration-seconds: 60
   # Do something that requires mutex lock...
   - uses: some-action
-# redlock-action automatically unlocks on 'post' step.
+  # redlock-action automatically unlocks on 'post' step.
 ```
 
 ### Manual lock and unlock
