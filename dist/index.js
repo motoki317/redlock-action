@@ -12523,21 +12523,9 @@ async function run() {
     )
   }
   if (isPost && action !== 'auto') {
-    return // No action to perform on post step if not 'auto' - so early return
-  }
-
-  let value = core.getInput('value')
-  if (action === 'unlock' && value === '') {
-    return core.setFailed(`"value" should be specified if action is "unlock"`)
-  }
-  if (action !== 'unlock' && value !== '') {
-    return core.setFailed(
-      `"value" should not be specified if action is not "unlock"`
-    )
-  }
-  // Get value from main step if this is 'auto'
-  if (action === 'auto' && isPost) {
-    value = core.getState('value')
+    // No action to perform on post step if not 'auto' - so early return
+    core.info('Nothing to cleanup.')
+    return
   }
 
   const hostsStr = core.getInput('hosts')
@@ -12606,7 +12594,7 @@ async function run() {
         core.setOutput('value', lock.value)
       } else {
         // Pass value to post step
-        core.saveState('value', value)
+        core.saveState('value', lock.value)
       }
     } catch (e) {
       console.trace(e)
@@ -12614,6 +12602,20 @@ async function run() {
     }
   }
   if ((action === 'unlock' && !isPost) || (action === 'auto' && isPost)) {
+    let value = core.getInput('value')
+    if (action === 'unlock' && value === '') {
+      return core.setFailed(`"value" should be specified if action is "unlock"`)
+    }
+    if (action !== 'unlock' && value !== '') {
+      return core.setFailed(
+        `"value" should not be specified if action is not "unlock"`
+      )
+    }
+    // Get value from main step if this is 'auto'
+    if (action === 'auto' && isPost) {
+      value = core.getState('value')
+    }
+
     try {
       await redlock.release({
         redlock,
