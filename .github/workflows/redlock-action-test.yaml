@@ -1,0 +1,51 @@
+name: Redlock Action Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  redlock-action:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+      - name: Critical section
+        run: |
+          echo "Do something that requires mutex..."
+
+  redlock-action-manual:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - uses: motoki317/redlock-action@main
+        id: my-lock
+        with:
+          action: lock
+          name: my-lock
+          hosts: my-redis:6379
+          duration-seconds: 60
+
+      - name: Critical section
+        run: |
+          echo "Do something that requires mutex..."
+
+      - uses: motoki317/redlock-action@main
+        with:
+          action: unlock
+          name: my-lock
+          hosts: my-redis:6379
+          value: ${{ steps.my-lock.outputs.value }}
