@@ -12574,80 +12574,89 @@ async function run() {
     retryJitter: retryJitterMs
   })
 
-  if ((action === 'lock' && !isPost) || (action === 'auto' && !isPost)) {
-    const durationSecondsStr = core.getInput('duration-seconds')
-    if (
-      !Number.isInteger(+durationSecondsStr) ||
-      Number(durationSecondsStr) <= 0
-    ) {
-      return core.setFailed(`"duration-seconds" should be a positive integer`)
-    }
-    const durationSeconds = Number(durationSecondsStr)
-
-    try {
-      core.info(`Trying to acquire lock (name=${name}) ...`)
-      const start = performance.now()
-      const lock = await redlock.acquire([name], durationSeconds * 1000)
-      const end = performance.now()
-      core.info(
-        `Successfully acquired lock after ${round((end - start) / 1000, 3)} s.`
-      )
-      core.info(`Lock name=${name}, value=${lock.value}`)
-
-      if (action === 'lock') {
-        core.setOutput('value', lock.value)
-      } else {
-        // Pass value to post step
-        core.saveState('value', lock.value)
+  try {
+    if ((action === 'lock' && !isPost) || (action === 'auto' && !isPost)) {
+      const durationSecondsStr = core.getInput('duration-seconds')
+      if (
+        !Number.isInteger(+durationSecondsStr) ||
+        Number(durationSecondsStr) <= 0
+      ) {
+        return core.setFailed(`"duration-seconds" should be a positive integer`)
       }
-    } catch (e) {
-      console.trace(e)
-      return core.setFailed('Failed to acquire lock')
-    }
-  }
-  if ((action === 'unlock' && !isPost) || (action === 'auto' && isPost)) {
-    let value = core.getInput('value')
-    if (action === 'unlock' && value === '') {
-      return core.setFailed(`"value" should be specified if action is "unlock"`)
-    }
-    if (action !== 'unlock' && value !== '') {
-      return core.setFailed(
-        `"value" should not be specified if action is not "unlock"`
-      )
-    }
-    // Get value from main step if this is 'auto'
-    if (action === 'auto' && isPost) {
-      value = core.getState('value')
-      if (value === '') {
+      const durationSeconds = Number(durationSecondsStr)
+
+      try {
+        core.info(`Trying to acquire lock (name=${name}) ...`)
+        const start = performance.now()
+        const lock = await redlock.acquire([name], durationSeconds * 1000)
+        const end = performance.now()
         core.info(
-          `value state not found, maybe lock acquisition was not successful?`
+          `Successfully acquired lock after ${round((end - start) / 1000, 3)} s.`
         )
-        return
+        core.info(`Lock name=${name}, value=${lock.value}`)
+
+        if (action === 'lock') {
+          core.setOutput('value', lock.value)
+        } else {
+          // Pass value to post step
+          core.saveState('value', lock.value)
+        }
+      } catch (e) {
+        console.trace(e)
+        return core.setFailed('Failed to acquire lock')
       }
     }
 
-    core.info(`Releasing lock ...`)
-    core.info(`Lock name=${name}, value=${value}`)
-
-    try {
-      await redlock.release(
-        {
-          redlock,
-          resources: [name],
-          value,
-          attempts: [],
-          expiration: 0
-        },
-        { retryCount: 0 }
-      )
-      core.info('Successfully released lock.')
-    } catch (e) {
-      console.trace(e)
-      core.error('Failed to release lock')
-      if (action === 'unlock') {
-        return core.setFailed('Failed to release lock')
+    if ((action === 'unlock' && !isPost) || (action === 'auto' && isPost)) {
+      let value = core.getInput('value')
+      if (action === 'unlock' && value === '') {
+        return core.setFailed(
+          `"value" should be specified if action is "unlock"`
+        )
       }
-      // If this was 'auto', do not report as failed in post step
+      if (action !== 'unlock' && value !== '') {
+        return core.setFailed(
+          `"value" should not be specified if action is not "unlock"`
+        )
+      }
+      // Get value from main step if this is 'auto'
+      if (action === 'auto' && isPost) {
+        value = core.getState('value')
+        if (value === '') {
+          core.info(
+            `value state not found, maybe lock acquisition was not successful?`
+          )
+          return
+        }
+      }
+
+      core.info(`Releasing lock ...`)
+      core.info(`Lock name=${name}, value=${value}`)
+
+      try {
+        await redlock.release(
+          {
+            redlock,
+            resources: [name],
+            value,
+            attempts: [],
+            expiration: 0
+          },
+          { retryCount: 0 }
+        )
+        core.info('Successfully released lock.')
+      } catch (e) {
+        console.trace(e)
+        core.error('Failed to release lock')
+        if (action === 'unlock') {
+          return core.setFailed('Failed to release lock')
+        }
+        // If this was 'auto', do not report as failed in post step
+      }
+    }
+  } finally {
+    for (const client of clients) {
+      client.disconnect()
     }
   }
 }
@@ -13373,15 +13382,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"acl":{"arity":-2,"flags":[],"keyStar
 var __webpack_exports__ = {};
 const { run } = __nccwpck_require__(1745)
 
-;(async () => {
-  try {
-    await run()
-    process.exit(0)
-  } catch (e) {
-    console.trace(e)
-    process.exit(1)
-  }
-})()
+run()
 
 module.exports = __webpack_exports__;
 /******/ })()
