@@ -22,6 +22,11 @@ jobs:
       - name: Critical section
         run: |
           echo "Do something that requires mutex..."
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
 
   redlock-action-manual:
     runs-on: ubuntu-latest
