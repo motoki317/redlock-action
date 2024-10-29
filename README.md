@@ -22,6 +22,8 @@ with:
   # Random lock value - only needed for manual "unlock" action.
   value: ''
 
+  # Redis hosts, separated by comma.
+  hosts: 'localhost:6379'
   # Name of the lock.
   name: ''
 
