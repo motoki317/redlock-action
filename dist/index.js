@@ -12589,6 +12589,7 @@ async function run() {
       const lock = await redlock.acquire([name], durationSeconds * 1000)
       const end = performance.now()
       core.info(`Successfully acquired lock after ${(end - start) / 1000} s.`)
+      core.info(`Lock name=${name}, value=${lock.value}`)
 
       if (action === 'lock') {
         core.setOutput('value', lock.value)
@@ -12615,6 +12616,9 @@ async function run() {
     if (action === 'auto' && isPost) {
       value = core.getState('value')
     }
+
+    core.info(`Releasing lock...`)
+    core.info(`Lock name=${name}, value=${value}`)
 
     try {
       await redlock.release({
