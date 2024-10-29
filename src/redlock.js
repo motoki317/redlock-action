@@ -4,6 +4,8 @@ const Client = require('ioredis')
 
 const validActions = ['auto', 'lock', 'unlock']
 
+const defaultRedisPort = 6379
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
@@ -65,7 +67,17 @@ export async function run() {
   }
   const retryJitterMs = Number(retryJitterMsStr)
 
-  const clients = hosts.map(host => new Client({ host }))
+  const clients = hosts.map(host => {
+    const parts = host.split(':')
+    switch (parts.length) {
+      case 1:
+        return new Client({ host: parts[0], port: defaultRedisPort })
+      case 2:
+        return new Client({ host: parts[0], port: +parts[1] })
+      default:
+        throw new Error(`unexpected host format: ${host}`)
+    }
+  })
   const redlock = new Redlock(clients, {
     retryCount,
     retryDelay: retryDelayMs,
