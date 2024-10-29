@@ -37,12 +37,12 @@ with:
   retry-count: 60
 
   # The time in milliseconds between attempts.
-  # Default: 1000
-  retry-delay-ms: 1000
+  # Default: 500
+  retry-delay-ms: 500
 
   # The max time in milliseconds randomly added to retries to improve performance under high contention.
-  # Default: 1000
-  retry-jitter-ms: 1000
+  # Default: 200
+  retry-jitter-ms: 200
 ```
 
 ## Examples
