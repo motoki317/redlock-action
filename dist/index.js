@@ -12547,19 +12547,19 @@ async function run() {
   }
 
   const retryCountStr = core.getInput('retry-count')
-  if (!Number.isInteger(retryCountStr) || Number(retryCountStr) <= 0) {
+  if (!Number.isInteger(+retryCountStr) || Number(retryCountStr) <= 0) {
     return core.setFailed(`"retry-count" should be a positive integer`)
   }
   const retryCount = Number(retryCountStr)
 
   const retryDelayMsStr = core.getInput('retry-delay-ms')
-  if (!Number.isInteger(retryDelayMsStr) || Number(retryDelayMsStr) <= 0) {
+  if (!Number.isInteger(+retryDelayMsStr) || Number(retryDelayMsStr) <= 0) {
     return core.setFailed(`"retry-delay-ms" should be a positive integer`)
   }
   const retryDelayMs = Number(retryDelayMsStr)
 
   const retryJitterMsStr = core.getInput('retry-jitter-ms')
-  if (!Number.isInteger(retryJitterMsStr) || Number(retryJitterMsStr) <= 0) {
+  if (!Number.isInteger(+retryJitterMsStr) || Number(retryJitterMsStr) <= 0) {
     return core.setFailed(`"retry-jitter-ms" should be a positive integer`)
   }
   const retryJitterMs = Number(retryJitterMsStr)
@@ -12574,7 +12574,7 @@ async function run() {
   if (action === 'lock' || (action === 'auto' && !isPost)) {
     const durationSecondsStr = core.getInput('duration-seconds')
     if (
-      !Number.isInteger(durationSecondsStr) ||
+      !Number.isInteger(+durationSecondsStr) ||
       Number(durationSecondsStr) <= 0
     ) {
       return core.setFailed(`"duration-seconds" should be a positive integer`)

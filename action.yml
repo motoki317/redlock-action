@@ -30,23 +30,23 @@ inputs:
       Number of seconds to acquire the resource for.
       After the duration has passed without unlocking, the resource will be automatically unlocked.
     required: false
-    default: 60
+    default: '60'
   retry-count:
     description:
       'The max number of times this action will attempt to lock a resource
       before giving up.'
     required: false
-    default: 10
+    default: '10'
   retry-delay-ms:
     description: 'The time in milliseconds between attempts.'
     required: false
-    default: 200
+    default: '200'
   retry-jitter-ms:
     description:
       'The max time in milliseconds randomly added to retries to improve
       performance under high contention.'
     required: false
-    default: 200
+    default: '200'
 
 # Define your outputs here.
 outputs:
