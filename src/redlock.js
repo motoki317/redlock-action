@@ -1,6 +1,6 @@
-import core from '@actions/core'
-import Redlock from 'redlock'
-import Client from 'ioredis'
+const core = require('@actions/core')
+const Redlock = require('redlock')
+const Client = require('ioredis')
 
 const validActions = ['auto', 'lock', 'unlock']
 
