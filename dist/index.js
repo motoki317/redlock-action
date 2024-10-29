@@ -12618,19 +12618,28 @@ async function run() {
     // Get value from main step if this is 'auto'
     if (action === 'auto' && isPost) {
       value = core.getState('value')
+      if (value === '') {
+        core.info(
+          `value state not found, maybe lock acquisition was not successful?`
+        )
+        return
+      }
     }
 
     core.info(`Releasing lock ...`)
     core.info(`Lock name=${name}, value=${value}`)
 
     try {
-      await redlock.release({
-        redlock,
-        resources: [name],
-        value,
-        attempts: [],
-        expiration: 0
-      })
+      await redlock.release(
+        {
+          redlock,
+          resources: [name],
+          value,
+          attempts: [],
+          expiration: 0
+        },
+        { retryCount: 0 }
+      )
       core.info('Successfully released lock.')
     } catch (e) {
       console.trace(e)
