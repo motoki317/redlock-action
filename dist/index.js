@@ -12522,6 +12522,9 @@ async function run() {
       `"action" should specify one of ${validActions.join(', ')}`
     )
   }
+  if (isPost && action !== 'auto') {
+    return // No action to perform on post step if not 'auto' - so early return
+  }
 
   let value = core.getInput('value')
   if (action === 'unlock' && value === '') {
@@ -12583,7 +12586,7 @@ async function run() {
     retryJitter: retryJitterMs
   })
 
-  if (action === 'lock' || (action === 'auto' && !isPost)) {
+  if ((action === 'lock' && !isPost) || (action === 'auto' && !isPost)) {
     const durationSecondsStr = core.getInput('duration-seconds')
     if (
       !Number.isInteger(+durationSecondsStr) ||
@@ -12610,7 +12613,7 @@ async function run() {
       return core.setFailed('Failed to acquire lock')
     }
   }
-  if (action === 'unlock' || (action === 'auto' && isPost)) {
+  if ((action === 'unlock' && !isPost) || (action === 'auto' && isPost)) {
     try {
       await redlock.release({
         redlock,
