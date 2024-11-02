@@ -107,7 +107,7 @@ export async function run() {
         core.info(
           `Successfully acquired lock after ${round((end - start) / 1000, 3)} s.`
         )
-        core.info(`Lock name=${name}, value=${lock.value}`)
+        core.info(`Lock name=${rName}, value=${lock.value}`)
 
         if (action === 'lock') {
           core.setOutput('name', rName)
