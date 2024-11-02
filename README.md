@@ -19,13 +19,14 @@ with:
   # Default: auto
   action: ''
 
-  # Random lock value - only needed for manual "unlock" action.
-  value: ''
-
   # Redis hosts, separated by comma.
   hosts: 'localhost:6379'
   # Name of the lock.
   name: ''
+  # Maximum lock "concurrency".
+  # If greater than 1, multiple clients are allowed to acquire the resource at the same time
+  # up to the specified concurrency, achieving semaphore-like behavior.
+  concurrency: 1
 
   # Number of seconds to acquire the resource for.
   # After the duration has passed without unlocking, the resource will be automatically unlocked.
@@ -35,14 +36,15 @@ with:
   # The max number of times this action will attempt to lock a resource before giving up.
   # Default: 60
   retry-count: 60
-
   # The time in milliseconds between attempts.
   # Default: 1000
   retry-delay-ms: 1000
-
   # The max time in milliseconds randomly added to retries to improve performance under high contention.
   # Default: 200
   retry-jitter-ms: 200
+
+  # Random lock value - only needed for manual "unlock" action.
+  value: ''
 ```
 
 ## Examples
@@ -81,7 +83,7 @@ steps:
   - uses: motoki317/redlock-action@main
     with:
       action: unlock
-      name: my-lock
+      name: ${{ steps.my-lock.outputs.name }}
       hosts: my-redis:6379
       value: ${{ steps.my-lock.outputs.value }}
 ```

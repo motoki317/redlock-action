@@ -49,3 +49,57 @@ jobs:
           name: my-lock
           hosts: localhost:6379
           value: ${{ steps.my-lock.outputs.value }}
+
+  redlock-semaphore:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+          concurrency: 2
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+          concurrency: 2
+      - name: Critical section
+        run: |
+          echo "Do something that requires mutex..."
+
+  redlock-semaphore-bad:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+          concurrency: 2
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+          concurrency: 2
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 60
+          concurrency: 2
+      - name: Critical section
+        run: |
+          echo "Do something that requires mutex..."

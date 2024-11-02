@@ -12534,10 +12534,16 @@ async function run() {
   }
   const hosts = hostsStr.split(',').map(e => e.trim())
 
-  const name = core.getInput('name')
+  let name = core.getInput('name')
   if (name === '') {
     return core.setFailed('"name" of the lock must be specified')
   }
+
+  const concurrencyStr = core.getInput('concurrency')
+  if (!Number.isInteger(+concurrencyStr) || Number(concurrencyStr) <= 0) {
+    return core.setFailed(`"concurrency" should be a positive integer`)
+  }
+  const concurrency = +concurrencyStr
 
   const retryCountStr = core.getInput('retry-count')
   if (!Number.isInteger(+retryCountStr) || Number(retryCountStr) <= 0) {
@@ -12568,11 +12574,8 @@ async function run() {
         throw new Error(`unexpected host format: ${host}`)
     }
   })
-  const redlock = new Redlock(clients, {
-    retryCount,
-    retryDelay: retryDelayMs,
-    retryJitter: retryJitterMs
-  })
+
+  const redlock = new Redlock(clients)
 
   try {
     if ((action === 'lock' && !isPost) || (action === 'auto' && !isPost)) {
@@ -12588,7 +12591,17 @@ async function run() {
       try {
         core.info(`Trying to acquire lock (name=${name}) ...`)
         const start = performance.now()
-        const lock = await redlock.acquire([name], durationSeconds * 1000)
+        const [rName, lock] = await acquire(
+          redlock,
+          name,
+          durationSeconds,
+          concurrency,
+          {
+            retryCount,
+            retryDelay: retryDelayMs,
+            retryJitter: retryJitterMs
+          }
+        )
         const end = performance.now()
         core.info(
           `Successfully acquired lock after ${round((end - start) / 1000, 3)} s.`
@@ -12596,9 +12609,11 @@ async function run() {
         core.info(`Lock name=${name}, value=${lock.value}`)
 
         if (action === 'lock') {
+          core.setOutput('name', rName)
           core.setOutput('value', lock.value)
         } else {
           // Pass value to post step
+          core.saveState('name', rName)
           core.saveState('value', lock.value)
         }
       } catch (e) {
@@ -12619,8 +12634,15 @@ async function run() {
           `"value" should not be specified if action is not "unlock"`
         )
       }
-      // Get value from main step if this is 'auto'
+      // Get name and value from main step if this is 'auto'
       if (action === 'auto' && isPost) {
+        name = core.getState('name')
+        if (name === '') {
+          core.info(
+            `name state not found, maybe lock acquisition was not successful?`
+          )
+          return
+        }
         value = core.getState('value')
         if (value === '') {
           core.info(
@@ -12661,8 +12683,63 @@ async function run() {
   }
 }
 
+/**
+ * @param {string} name
+ * @param {number} idx
+ * @param {number} concurrency
+ * @returns {string}
+ */
+const resourceName = (name, idx, concurrency) => {
+  if (concurrency === 1) return name
+  return `${name}-${idx}`
+}
+
+/**
+ * @param {import('redlock').default} redlock
+ * @param {string} name
+ * @param {number} durationSeconds
+ * @param {number} concurrency
+ * @param {Partial<import('redlock').Settings>} settings
+ * @return {Promise<[string, import('redlock').Lock]>}
+ */
+const acquire = async (
+  redlock,
+  name,
+  durationSeconds,
+  concurrency,
+  settings
+) => {
+  let err
+  for (let retry = 0; retry < settings.retryCount; retry++) {
+    // Try to acquire any of the lock
+    for (let idx = 0; idx < concurrency; idx++) {
+      try {
+        const rName = resourceName(name, idx, concurrency)
+        return [
+          rName,
+          await redlock.acquire([rName], durationSeconds * 1000, {
+            retryCount: 0
+          })
+        ]
+      } catch (e) {
+        err = e
+      }
+    }
+
+    // Sleep and try again
+    if (retry === settings.retryCount - 1) break
+    const jitterMs = Math.round((Math.random() * 2 - 1) * settings.retryJitter)
+    await sleep(settings.retryDelay + jitterMs)
+  }
+
+  // Failed to acquire lock in specified retry count
+  throw err
+}
+
 const round = (n, places) =>
   Math.round(n * Math.pow(10, places)) / Math.pow(10, places)
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 
 /***/ }),

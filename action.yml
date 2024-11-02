@@ -12,10 +12,6 @@ inputs:
       unlock - Only performs unlock.
     required: false
     default: 'auto'
-  value:
-    description: 'Random lock value - only needed for manual "unlock" action.'
-    required: false
-    default: ''
 
   hosts:
     description: 'Redis hosts, separated by comma.'
@@ -24,6 +20,13 @@ inputs:
   name:
     description: 'Name of the lock.'
     required: true
+  concurrency:
+    description: |
+      Maximum lock "concurrency".
+      If greater than 1, multiple clients are allowed to acquire the resource at the same time
+      up to the specified concurrency, achieving semaphore-like behavior.
+    required: false
+    default: 1
 
   duration-seconds:
     description: |
@@ -47,6 +50,11 @@ inputs:
       performance under high contention.'
     required: false
     default: '200'
+
+  value:
+    description: 'Random lock value - only needed for manual "unlock" action.'
+    required: false
+    default: ''
 
 # Define your outputs here.
 outputs:
