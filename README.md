@@ -1,5 +1,7 @@
 # Redlock Action
 
+[![GitHub release](https://img.shields.io/github/release/motoki317/redlock-action.svg)](https://github.com/motoki317/redlock-action/releases/)
+
 This action achieves
 [Redlock](https://redis.io/docs/latest/develop/use/patterns/distributed-locks/)
 using redis instances available from the actions runner instance.
