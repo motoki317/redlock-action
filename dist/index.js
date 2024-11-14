@@ -12662,7 +12662,7 @@ async function run() {
       // Spawn heartbeat process
       try {
         core.info(`Starting heartbeat process ...`)
-        const mainPath = path.join(__dirname, 'main.js')
+        const mainPath = path.join(__dirname, 'index.js')
         const out = fs.openSync('/tmp/redlock-hb.log', 'a')
         const err = fs.openSync('/tmp/redlock-hb.log', 'a')
         const hb = child_process.spawn(
