@@ -46,9 +46,10 @@ jobs:
       - uses: motoki317/redlock-action@main
         with:
           action: unlock
-          name: my-lock
+          name: ${{ steps.my-lock.outputs.name }}
           hosts: localhost:6379
           value: ${{ steps.my-lock.outputs.value }}
+          heartbeat-pid: ${{ steps.my-lock.outputs.heartbeat-pid }}
 
   redlock-semaphore:
     runs-on: ubuntu-latest
