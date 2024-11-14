@@ -29,6 +29,29 @@ jobs:
           ps aux
           cat /tmp/redlock-hb.log
 
+  redlock-action-bad:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - uses: motoki317/redlock-action@main
+        with:
+          name: my-lock
+          hosts: localhost:6379
+          duration-seconds: 15
+      - name: Critical section
+        run: |
+          echo "Do something that requires mutex..."
+          ps aux
+          cat /tmp/redlock-hb.log
+          echo sleeping
+          sleep 30
+          ps aux
+          cat /tmp/redlock-hb.log
+
   redlock-action-manual:
     runs-on: ubuntu-latest
     services:
