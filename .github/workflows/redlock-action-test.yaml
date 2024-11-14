@@ -25,7 +25,7 @@ jobs:
           ps aux
           cat /tmp/redlock-hb.log
           echo sleeping
-          sleep 10
+          sleep 15
           ps aux
           cat /tmp/redlock-hb.log
 
@@ -48,6 +48,7 @@ jobs:
       - name: Critical section
         run: |
           echo "Do something that requires mutex..."
+          sleep 15
 
       - uses: motoki317/redlock-action@main
         with:
@@ -80,3 +81,4 @@ jobs:
       - name: Critical section
         run: |
           echo "Do something that requires mutex..."
+          sleep 15
