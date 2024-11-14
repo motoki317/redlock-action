@@ -20,7 +20,6 @@ if (process.argv.length >= 3 && process.argv[2] === 'heartbeat') {
     [],
     Number(lockExpiration)
   )
-  console.log(JSON.stringify(lock))
 
   // eslint-disable-next-line github/no-then
   heartbeat(redlock, lock, Number(durationSecondsStr) * 1000).then(() => {
