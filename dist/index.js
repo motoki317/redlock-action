@@ -12552,6 +12552,7 @@ const { lockDuration } = __nccwpck_require__(3793)
 const { getClients, round, sleep } = __nccwpck_require__(5804)
 const child_process = __nccwpck_require__(1421)
 const path = __nccwpck_require__(6760)
+const fs = __nccwpck_require__(3024)
 const { default: Redlock } = __nccwpck_require__(8085)
 const core = __nccwpck_require__(7484)
 
@@ -12662,6 +12663,8 @@ async function run() {
       try {
         core.info(`Starting heartbeat process ...`)
         const mainPath = path.join(__dirname, 'main.js')
+        const out = fs.openSync('/tmp/redlock-hb.log', 'a')
+        const err = fs.openSync('/tmp/redlock-hb.log', 'a')
         const hb = child_process.spawn(
           'node',
           [
@@ -12673,8 +12676,9 @@ async function run() {
             lock.value,
             `${lock.expiration}`
           ],
-          { detached: true }
+          { detached: true, stdio: ['ignore', out, err] }
         )
+        hb.unref()
         core.info(`Started heartbeat process, pid=${hb.pid}`)
 
         if (action === 'lock') {
@@ -12948,6 +12952,14 @@ module.exports = require("net");
 
 "use strict";
 module.exports = require("node:child_process");
+
+/***/ }),
+
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
 
 /***/ }),
 
@@ -13614,6 +13626,7 @@ if (process.argv.length >= 3 && process.argv[2] === 'heartbeat') {
     [],
     Number(lockExpiration)
   )
+  console.log(JSON.stringify(lock))
 
   // eslint-disable-next-line github/no-then
   heartbeat(redlock, lock, Number(durationSecondsStr) * 1000).then(() => {

@@ -2,6 +2,7 @@ const { lockDuration } = require('./heartbeat')
 const { getClients, round, sleep } = require('./utils')
 const child_process = require('node:child_process')
 const path = require('node:path')
+const fs = require('node:fs')
 const { default: Redlock } = require('redlock')
 const core = require('@actions/core')
 
@@ -112,6 +113,8 @@ export async function run() {
       try {
         core.info(`Starting heartbeat process ...`)
         const mainPath = path.join(__dirname, 'main.js')
+        const out = fs.openSync('/tmp/redlock-hb.log', 'a')
+        const err = fs.openSync('/tmp/redlock-hb.log', 'a')
         const hb = child_process.spawn(
           'node',
           [
@@ -123,8 +126,9 @@ export async function run() {
             lock.value,
             `${lock.expiration}`
           ],
-          { detached: true }
+          { detached: true, stdio: ['ignore', out, err] }
         )
+        hb.unref()
         core.info(`Started heartbeat process, pid=${hb.pid}`)
 
         if (action === 'lock') {
