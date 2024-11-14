@@ -112,15 +112,19 @@ export async function run() {
       try {
         core.info(`Starting heartbeat process ...`)
         const mainPath = path.join(__dirname, 'main.js')
-        const hb = child_process.spawn('node', [
-          mainPath,
-          'heartbeat',
-          hostsStr,
-          durationSecondsStr,
-          lockName,
-          lock.value,
-          `${lock.expiration}`
-        ])
+        const hb = child_process.spawn(
+          'node',
+          [
+            mainPath,
+            'heartbeat',
+            hostsStr,
+            durationSecondsStr,
+            lockName,
+            lock.value,
+            `${lock.expiration}`
+          ],
+          { detached: true }
+        )
         core.info(`Started heartbeat process, pid=${hb.pid}`)
 
         if (action === 'lock') {
@@ -153,12 +157,12 @@ export async function run() {
       core.info(`Stopping heartbeat process, pid=${hbPid} ...`)
       try {
         child_process.execSync(`kill ${hbPid}`)
+        core.info(`Stopped heartbeat process.`)
       } catch (e) {
         console.error(
           `Failed to stop heartbeat process, perhaps it already exited?: ${e.message}`
         )
       }
-      core.info(`Stopped heartbeat process.`)
 
       // Unlock
       let value = core.getInput('value')
