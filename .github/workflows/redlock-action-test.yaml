@@ -23,6 +23,7 @@ jobs:
         run: |
           echo "Do something that requires mutex..."
           ps aux
+          cat /tmp/redlock-hb.log
 
   redlock-action-manual:
     runs-on: ubuntu-latest
