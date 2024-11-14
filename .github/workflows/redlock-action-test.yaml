@@ -22,6 +22,7 @@ jobs:
       - name: Critical section
         run: |
           echo "Do something that requires mutex..."
+          ps aux
 
   redlock-action-manual:
     runs-on: ubuntu-latest
