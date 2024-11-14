@@ -24,6 +24,10 @@ jobs:
           echo "Do something that requires mutex..."
           ps aux
           cat /tmp/redlock-hb.log
+          echo sleeping
+          sleep 10
+          ps aux
+          cat /tmp/redlock-hb.log
 
   redlock-action-manual:
     runs-on: ubuntu-latest
