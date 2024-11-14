@@ -33,6 +33,6 @@ export const heartbeat = async (redlock, lock, maxMs) => {
 
 const sleepUntil = async until => {
   const now = performance.now()
-  if (now <= until) return
-  return sleep(now - until)
+  if (until <= now) return
+  return sleep(until - now)
 }
