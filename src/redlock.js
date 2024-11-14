@@ -215,9 +215,11 @@ export async function run() {
         core.info('Successfully released lock.')
       } catch (e) {
         console.trace(e)
-        core.error('Failed to release lock')
+        core.error('Failed to release lock, perhaps the lock expired?')
         if (action === 'unlock') {
-          return core.setFailed('Failed to release lock')
+          return core.setFailed(
+            'Failed to release lock, perhaps the lock expired? Is lock name and value correct? Please check actions usage.'
+          )
         }
         // If this was 'auto', do not report as failed in post step
       }
