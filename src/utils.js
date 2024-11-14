@@ -1,4 +1,4 @@
-import Client from 'ioredis'
+const Client = require('ioredis')
 
 export const round = (n, places) =>
   Math.round(n * Math.pow(10, places)) / Math.pow(10, places)

@@ -1,7 +1,7 @@
-import { run } from './redlock'
-import { heartbeat } from './heartbeat'
-import { getClients } from './utils'
-import { default as Redlock, Lock } from 'redlock'
+const { run } = require('./redlock')
+const { heartbeat } = require('./heartbeat')
+const { getClients } = require('./utils')
+const { default: Redlock, Lock } = require('redlock')
 
 if (process.argv.length >= 3 && process.argv[2] === 'heartbeat') {
   const hostsStr = process.argv[3]

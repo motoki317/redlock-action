@@ -33,8 +33,8 @@ queue.
 > This means that there can be at most one running and one pending job in a
 > concurrency group at any time.
 
-Therefore, this `concurrency` syntax can only be used if the workflow is safe to be 'superseded' by
-a newer pending workflow, or the workflow is *idempotent*.
+Therefore, this `concurrency` syntax can only be used if the workflow is safe to
+be 'superseded' by a newer pending workflow, or the workflow is _idempotent_.
 
 This action is intended to create a simple workflow mutex and 'queue', allowing
 workflows to wait before entering a critical section.

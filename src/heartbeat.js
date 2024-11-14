@@ -1,4 +1,4 @@
-import { sleep } from './utils'
+const { sleep } = require('./utils')
 
 const heartbeatPeriodMs = 1000
 export const lockDuration = 10 * 1000

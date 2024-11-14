@@ -1,9 +1,9 @@
-import { lockDuration } from './heartbeat'
-import { getClients, round, sleep } from './utils'
-import * as child_process from 'node:child_process'
-import * as path from 'node:path'
-import { default as Redlock } from 'redlock'
-import core from '@actions/core'
+const { lockDuration } = require('./heartbeat')
+const { getClients, round, sleep } = require('./utils')
+const child_process = require('node:child_process')
+const path = require('node:path')
+const { default: Redlock } = require('redlock')
+const core = require('@actions/core')
 
 const validActions = ['auto', 'lock', 'unlock']
 
