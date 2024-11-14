@@ -9,6 +9,60 @@ using redis instances available from the actions runner instance.
 This action is mainly intended to be used by self-hosted runner users, since
 this is dependent on an external Redis instance.
 
+## Why?
+
+There is a built-in concurrency controlling syntax in GitHub Actions:
+
+```yaml
+concurrency:
+  group: my-group
+  cancel-in-progress: false
+```
+
+While this syntax allows at most one action to be executed at one time (mutex -
+mutually exclusive),
+
+> Use concurrency to ensure that only a single job or workflow using the same
+> concurrency group will run at a time
+> https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#concurrency
+
+It does not allow creating a workflow queue. If more than one workflow is queued
+into a group and becomes pending, the former workflow will be dropped from the
+queue.
+
+> This means that there can be at most one running and one pending job in a
+> concurrency group at any time.
+
+Therefore, this `concurrency` syntax can only be used if the workflow is safe to be 'superseded' by
+a newer pending workflow, or the workflow is *idempotent*.
+
+This action is intended to create a simple workflow mutex and 'queue', allowing
+workflows to wait before entering a critical section.
+
+### Limitation
+
+- While you can create a workflow 'queue' using this action, the order of lock
+  acquisition is not guaranteed (i.e. it is _NOT_ FIFO nor LIFO).
+  - This is because the current implementation is a simple spin lock.
+
+## Fault Tolerance
+
+The lock acquisition and holding is "fault-tolerant", as in, it is unlocked
+correctly and early in case the workflow holding the lock is terminated abruptly
+without unlocking (this is different from 'cancelling' or 'failing' a
+workflow!).
+
+Normally, this action automatically releases the lock using 'post run' feature
+of GitHub Actions. However, in case the workflow process terminates abruptly
+(for example, node failure), this post run step may not be run.
+
+The action internally acquires a 10-second lock and extends the lock every 1
+second in a background 'heartbeat' process (these heartbeat intervals are
+hard-coded as of now). This heartbeat process is stopped as soon as the lock is
+released, or after the specified time has passed. If the workflow as well as the
+heartbeat process is terminated abruptly, the lock will be released correctly
+and early, thanks to the short 10-second expiration time.
+
 ## Usage
 
 ```yaml
@@ -47,6 +101,8 @@ with:
 
   # Random lock value - only needed for manual "unlock" action.
   value: ''
+  # Heartbeat pid value - only needed for manual "unlock" action.
+  heartbeat-pid: ''
 ```
 
 ## Examples
@@ -88,4 +144,5 @@ steps:
       name: ${{ steps.my-lock.outputs.name }}
       hosts: my-redis:6379
       value: ${{ steps.my-lock.outputs.value }}
+      heartbeat-pid: ${{ steps.my-lock.outputs.heartbeat-pid }}
 ```

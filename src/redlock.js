@@ -1,10 +1,11 @@
-const core = require('@actions/core')
-const { default: Redlock } = require('redlock')
-const Client = require('ioredis')
+import { lockDuration } from './heartbeat'
+import { getClients, round, sleep } from './utils'
+import * as child_process from 'node:child_process'
+import * as path from 'node:path'
+import { default as Redlock } from 'redlock'
+import core from '@actions/core'
 
 const validActions = ['auto', 'lock', 'unlock']
-
-const defaultRedisPort = 6379
 
 /**
  * The main function for the action.
@@ -33,7 +34,6 @@ export async function run() {
   if (hostsStr === '') {
     return core.setFailed(`"hosts" should include at least 1 host`)
   }
-  const hosts = hostsStr.split(',').map(e => e.trim())
 
   let name = core.getInput('name')
   if (name === '') {
@@ -64,66 +64,103 @@ export async function run() {
   }
   const retryJitterMs = Number(retryJitterMsStr)
 
-  const clients = hosts.map(host => {
-    const parts = host.split(':')
-    switch (parts.length) {
-      case 1:
-        return new Client({ host: parts[0], port: defaultRedisPort })
-      case 2:
-        return new Client({ host: parts[0], port: +parts[1] })
-      default:
-        throw new Error(`unexpected host format: ${host}`)
-    }
-  })
+  const durationSecondsStr = core.getInput('duration-seconds')
+  if (
+    !Number.isInteger(+durationSecondsStr) ||
+    Number(durationSecondsStr) <= 0
+  ) {
+    return core.setFailed(`"duration-seconds" should be a positive integer`)
+  }
 
+  const hosts = hostsStr.split(',').map(e => e.trim())
+  const clients = getClients(hosts)
   const redlock = new Redlock(clients)
 
   try {
     if ((action === 'lock' && !isPost) || (action === 'auto' && !isPost)) {
-      const durationSecondsStr = core.getInput('duration-seconds')
-      if (
-        !Number.isInteger(+durationSecondsStr) ||
-        Number(durationSecondsStr) <= 0
-      ) {
-        return core.setFailed(`"duration-seconds" should be a positive integer`)
-      }
-      const durationSeconds = Number(durationSecondsStr)
-
+      // Acquire first lock
+      let lockName
+      let lock
       try {
         core.info(`Trying to acquire lock (name=${name}) ...`)
         const start = performance.now()
-        const [rName, lock] = await acquire(
-          redlock,
-          name,
-          durationSeconds,
-          concurrency,
-          {
-            retryCount,
-            retryDelay: retryDelayMs,
-            retryJitter: retryJitterMs
-          }
-        )
+        ;[lockName, lock] = await acquire(redlock, name, concurrency, {
+          retryCount,
+          retryDelay: retryDelayMs,
+          retryJitter: retryJitterMs
+        })
         const end = performance.now()
         core.info(
           `Successfully acquired lock after ${round((end - start) / 1000, 3)} s.`
         )
-        core.info(`Lock name=${rName}, value=${lock.value}`)
+        core.info(`Lock name=${lockName}, value=${lock.value}`)
 
         if (action === 'lock') {
-          core.setOutput('name', rName)
+          core.setOutput('name', lockName)
           core.setOutput('value', lock.value)
         } else {
           // Pass value to post step
-          core.saveState('name', rName)
+          core.saveState('name', lockName)
           core.saveState('value', lock.value)
         }
       } catch (e) {
         console.trace(e)
         return core.setFailed('Failed to acquire lock')
       }
+
+      // Spawn heartbeat process
+      try {
+        core.info(`Starting heartbeat process ...`)
+        const mainPath = path.join(__dirname, 'main.js')
+        const hb = child_process.spawn('node', [
+          mainPath,
+          'heartbeat',
+          hostsStr,
+          durationSecondsStr,
+          lockName,
+          lock.value,
+          `${lock.expiration}`
+        ])
+        core.info(`Started heartbeat process, pid=${hb.pid}`)
+
+        if (action === 'lock') {
+          core.setOutput('heartbeat-pid', hb.pid)
+        } else {
+          // Pass value to post step
+          core.saveState('heartbeat-pid', hb.pid)
+        }
+      } catch (e) {
+        console.trace(e)
+        return core.setFailed('Failed to spawn heartbeat process')
+      }
     }
 
     if ((action === 'unlock' && !isPost) || (action === 'auto' && isPost)) {
+      // Stop heartbeat process
+      let hbPidStr
+      if (action === 'unlock') {
+        hbPidStr = core.getInput('heartbeat-pid')
+      } else {
+        hbPidStr = core.getState('heartbeat-pid')
+      }
+      if (!Number.isInteger(+hbPidStr)) {
+        return core.setFailed(
+          `"heartbeat-pid" is not integer, check actions usage`
+        )
+      }
+      const hbPid = Number(hbPidStr)
+
+      core.info(`Stopping heartbeat process, pid=${hbPid} ...`)
+      try {
+        child_process.execSync(`kill ${hbPid}`)
+      } catch (e) {
+        console.error(
+          `Failed to stop heartbeat process, perhaps it already exited?: ${e.message}`
+        )
+      }
+      core.info(`Stopped heartbeat process.`)
+
+      // Unlock
       let value = core.getInput('value')
       if (action === 'unlock' && value === '') {
         return core.setFailed(
@@ -198,18 +235,11 @@ const resourceName = (name, idx, concurrency) => {
 /**
  * @param {import('redlock').default} redlock
  * @param {string} name
- * @param {number} durationSeconds
  * @param {number} concurrency
  * @param {Partial<import('redlock').Settings>} settings
  * @return {Promise<[string, import('redlock').Lock]>}
  */
-const acquire = async (
-  redlock,
-  name,
-  durationSeconds,
-  concurrency,
-  settings
-) => {
+const acquire = async (redlock, name, concurrency, settings) => {
   let err
   for (let retry = 0; retry < settings.retryCount; retry++) {
     // Try to acquire any of the lock
@@ -218,7 +248,7 @@ const acquire = async (
         const rName = resourceName(name, idx, concurrency)
         return [
           rName,
-          await redlock.acquire([rName], durationSeconds * 1000, {
+          await redlock.acquire([rName], lockDuration, {
             retryCount: 0
           })
         ]
@@ -236,8 +266,3 @@ const acquire = async (
   // Failed to acquire lock in specified retry count
   throw err
 }
-
-const round = (n, places) =>
-  Math.round(n * Math.pow(10, places)) / Math.pow(10, places)
-
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))

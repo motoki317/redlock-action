@@ -55,12 +55,19 @@ inputs:
     description: 'Random lock value - only needed for manual "unlock" action.'
     required: false
     default: ''
+  heartbeat-pid:
+    description: 'Heartbeat pid - only needed for manual "unlock" action.'
+    required: false
+    default: ''
 
 # Define your outputs here.
 outputs:
   value:
     description:
       'Lock random value - used in manual unlock to release the resource.'
+  heartbeat-pid:
+    description:
+      'Heartbeat pid - used in manual unlock to release the resource.'
 
 runs:
   using: node20
