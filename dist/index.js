@@ -12666,7 +12666,7 @@ async function run() {
         const out = fs.openSync('/tmp/redlock-hb.log', 'a')
         const err = fs.openSync('/tmp/redlock-hb.log', 'a')
         const hb = child_process.spawn(
-          'node',
+          process.argv[0],
           [
             mainPath,
             'heartbeat',
